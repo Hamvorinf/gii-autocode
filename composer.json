@@ -1,0 +1,22 @@
+{
+  "name": "hamvorinf/gii-autocode",
+  "description": "Models and Crud Controllers Auto Generator for Yii 2.0",
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "hamvorinf",
+      "email": "hamvorinf@gmail.com"
+    }
+  ],
+  "require":{
+    "php": ">=5.4.0",
+    "yiisoft/yii2": "~2.0.0",
+    "yiisoft/yii2-gii":"~2.0.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "hamvorinf\\giiauto\\": ""
+    }
+  }
+}
