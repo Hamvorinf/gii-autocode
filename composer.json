@@ -2,7 +2,7 @@
   "name": "hamvorinf/gii-autocode",
   "description": "Models and Crud Controllers Auto Generator for Yii 2.0",
   "minimum-stability": "dev",
-  "license": "MIT",
+  "license": "Apache License 2.",
   "authors": [
     {
       "name": "hamvorinf",
