@@ -38,6 +38,16 @@ class AutoGeneratorController extends Controller
     public $enableI18N = true;
 
     /**
+     * @var boolean whether to wrap the `GridView` or `ListView` widget with the `yii\widgets\Pjax` widget
+     */
+    public $enablePjax = false;
+
+    /**
+     * @var bool whether generate crud controller after generated model class
+     */
+    public $generateCrud = false;
+
+    /**
      * @var string the message category used by `Yii::t()` when `$enableI18N` is `true`.
      * Defaults to `app`.
      */
@@ -53,9 +63,12 @@ class AutoGeneratorController extends Controller
      */
     private $defaultModelConfig = [
         'ns' => 'common\\\\models\\\\base',             // model namespace
+        'nsSearch' => 'common\\\\models\\\\search',     // model search namespace
         'baseClass' => 'yii\\\\db\\\\ActiveRecord',     // model template class
         'useTablePrefix' => 1,                          // whether use table prefix
         'generateLabelsFromComments' => 1,              // whether use comments of tables as label annotations
+        'overwrite' => true,                            // overwrite all existed file
+        'codeTemplate' => 'default',                    // default code template
     ];
 
     /**
@@ -68,8 +81,10 @@ class AutoGeneratorController extends Controller
      */
     public $standarControllerConfig = [
         'ns' => 'backend\\\\controller',                // controller namespace
-        'viewPath' => '@backend/views',                // view file path
+        'viewPath' => '@backend/views',                 // view file path
         'baseClass' => 'yii\\\\web\\\\Controller',      // controller template class
+        'overwrite' => true,                            // overwrite all existed file
+        'codeTemplate' => 'default',                    // default code template
     ];
 
 
@@ -122,6 +137,10 @@ class AutoGeneratorController extends Controller
             return 0;
         }
 
+        if(is_dir('backend/models/search') === false) {
+            mkdir('backend/models/search', 0777);
+        }
+
         foreach ($tables as &$table) {
             $table = current($table);
             $modelClass = str_replace(' ', '', ucwords(str_replace('_', ' ', str_replace($this->db->tablePrefix, '', $table))));
@@ -134,27 +153,33 @@ class AutoGeneratorController extends Controller
                 . '--generateLabelsFromComments=' . $this->modelConfig['generateLabelsFromComments'] . ' '
                 . '--baseClass=' . $this->modelConfig['baseClass'] . ' '
                 . '--enableI18N=' . $this->enableI18N . ' '
-                . '--messageCategory=' . $this->messageCategory;
+                . '--messageCategory=' . $this->messageCategory . ' '
+                . '--template=' . $this->modelConfig['codeTemplate'];
 
-            echo "\n\n===> Generoting Model " . $modelClass . " Begin <===\n". $cmdModel . "\n";
-            exec($cmdModel . '<<< "ya"', $output, $return);
+            echo "\n\n===> Generoting Model " . $modelClass . " with Overwrite=" . ($this->modelConfig['overwrite'] ? '"ya"' : '"na"') . " Begin <===\n". $cmdModel . "\n";
+            exec($cmdModel . '<<< ' . ($this->modelConfig['overwrite'] ? '"ya"' : '"na"'), $output, $return);
             $this->showLogs($output);
 
-            $controllerClass = $modelClass . 'Controller';
-            $viewPath = $this->controllerConfig['viewPath'] . '/' . strtolower(preg_replace('/([A-Z])/', "-$1", lcfirst($modelClass)));
-            $searchModelClass = $modelClass . 'Search';
-            $cmdController = 'php ' . $this->yiiPath . ' gii/crud '
-                . '--modelClass=' . $this->modelConfig['ns'] . '\\\\' . $modelClass . ' '
-                . '--searchModelClass=' . $this->modelConfig['ns'] . '\\\\' . $searchModelClass . ' '
-                . '--controllerClass=' .$this->controllerConfig['ns'] . '\\\\' . $controllerClass . ' '
-                . '--viewPath=' . $viewPath . ' '
-                . '--baseControllerClass=' . $this->controllerConfig['baseClass'] . ' '
-                . '--enableI18N=' . $this->enableI18N . ' '
-                . '--messageCategory=' . $this->messageCategory;
 
-            echo "\n===> Generoting CRUD Controller " . $controllerClass . " Begin <===\n". $cmdController . "\n";
-            exec($cmdController . '<<< "ya"', $output, $return);
-            $this->showLogs($output);
+            if($this->generateCrud) {
+                $controllerClass = $modelClass . 'Controller';
+                $viewPath = $this->controllerConfig['viewPath'] . '/' . strtolower(preg_replace('/([A-Z])/', "-$1", lcfirst($modelClass)));
+                $searchModelClass = $modelClass . 'Search';
+                $cmdController = 'php ' . $this->yiiPath . ' gii/crud '
+                    . '--modelClass=' . $this->modelConfig['ns'] . '\\\\' . $modelClass . ' '
+                    . '--searchModelClass=' . $this->modelConfig['nsSearch'] . '\\\\' . $searchModelClass . ' '
+                    . '--controllerClass=' . $this->controllerConfig['ns'] . '\\\\' . $controllerClass . ' '
+                    . '--viewPath=' . $viewPath . ' '
+                    . '--baseControllerClass=' . $this->controllerConfig['baseClass'] . ' '
+                    . '--enableI18N=' . $this->enableI18N . ' '
+                    . '--messageCategory=' . $this->messageCategory . ' '
+                    . '--template=' . $this->controllerConfig['codeTemplate'] . ' '
+                    . '--enablePjax=' . $this->enablePjax;
+
+                echo "\n===> Generoting CRUD Controller " . $controllerClass . " with Overwrite=" . ($this->controllerConfig['overwrite'] ? '"ya"' : '"na"') . " Begin <===\n" . $cmdController . "\n";
+                exec($cmdController . '<<< ' . ($this->controllerConfig['overwrite'] ? '"ya"' : '"na"'), $output, $return);
+                $this->showLogs($output);
+            }
 
 
             unset($table, $modelClass, $output, $return);
